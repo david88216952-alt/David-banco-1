@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusPay Treasury | Portal de Aprovações de Alto Valor FIDO2</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            fintech: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+              navy: '#0b132b',
+              navyCard: '#111d42',
+              border: '#1e2d5a',
+              gold: '#f59e0b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#080d1e] text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- Top Bar de Segurança Corporativa -->
+  <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 border-b border-emerald-900/40 text-xs py-2 px-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-emerald-400 font-medium">
+        <i class="ph ph-shield-check text-base"></i>
+        <span>Ambiente Seguro NexusPay Corporate &bull; Protocolo FIDO2 / WebAuthn Ativo (Anti-Phishing)</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Nó de Tesouraria Online</span>
+        </span>
+        <span class="hidden md:inline text-slate-600">|</span>
+        <span class="hidden md:inline"><i class="ph ph-cpu mr-1"></i>Hardware TPM / Secure Enclave Conectado</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Principal com Perfil do Diretor -->
+  <header class="border-b border-slate-800 bg-[#0c142b]/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      
+      <!-- Logo e Identidade da Fintech -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20">
+          <i class="ph-bold ph-fingerprint-simple text-2xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">NexusPay</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold tracking-wide uppercase">Treasury Portal</span>
+          </div>
+          <p class="text-xs text-slate-400">Aprovação de Transferências Corporativas de Alto Valor</p>
+        </div>
+      </div>
+
+      <!-- Seletor de Diretor Ativo e Status Biométrico -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Status da Biometria do Diretor Atual -->
+        <div id="userBiometricBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all">
+          <!-- Preenchido dinamicamente via JS -->
+          <i class="ph ph-spinner animate-spin text-sm"></i>
+          <span>Carregando status biométrico...</span>
+        </div>
+
+        <!-- Dropdown Seletor de Diretor -->
+        <div class="relative">
+          <select id="userSelector" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 pr-8 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none transition-colors">
+            <option value="">Carregando diretores...</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-2.5 top-2.5 text-xs text-slate-400 pointer-events-none"></i>
+        </div>
+
+        <!-- Botão Novo Diretor -->
+        <button onclick="openModal('newDirectorModal')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1 transition-colors border border-slate-700" title="Cadastrar outro diretor">
+          <i class="ph ph-user-plus text-sm"></i>
+        </button>
+
+        <!-- Botão Reset de Demonstração -->
+        <button onclick="resetDemo()" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs flex items-center gap-1.5 transition-colors" title="Reiniciar transferências para apresentar novamente">
+          <i class="ph ph-arrows-clockwise text-xs"></i>
+          <span class="hidden sm:inline">Resetar Demo</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Métricas Rápidas de Tesouraria -->
+  <section class="max-w-7xl mx-auto px-4 pt-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      
+      <!-- Card Saldo Disponível -->
+      <div class="bg-gradient-to-br from-slate-900 to-[#101a38] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">Saldo em Tesouraria (Conta Corrente)</span>
+          <span class="text-2xl font-bold tracking-tight text-white mt-1 block">R$ 48.720.000,00</span>
+          <span class="text-[11px] text-emerald-400 flex items-center gap-1 mt-1 font-medium">
+            <i class="ph ph-check-circle"></i> Fundo de Reserva Ativo
+          </span>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 text-xl">
+          <i class="ph ph-vault"></i>
+        </div>
+      </div>
+
+      <!-- Card Transferências em Espera -->
+      <div class="bg-gradient-to-br from-slate-900 to-[#101a38] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">Volume Pendente de Aprovação</span>
+          <span id="metricPendingAmount" class="text-2xl font-bold tracking-tight text-amber-400 mt-1 block">R$ 9.450.000,00</span>
+          <span id="metricPendingCount" class="text-[11px] text-amber-300 flex items-center gap-1 mt-1 font-medium">
+            <i class="ph ph-clock"></i> 3 TEDs aguardando biometria
+          </span>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 text-xl">
+          <i class="ph ph-hourglass-high"></i>
+        </div>
+      </div>
+
+      <!-- Card Camada de Proteção FIDO2 -->
+      <div class="bg-gradient-to-br from-slate-900 to-[#101a38] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">Política de Risco Corporativo</span>
+          <span class="text-base font-bold tracking-tight text-white mt-1 block">&gt; R$ 1 Milhão: FIDO2 Obrigatório</span>
+          <span class="text-[11px] text-slate-400 flex items-center gap-1 mt-1 font-mono">
+            <i class="ph ph-lock-key text-emerald-400"></i> Zero Senhas na Nuvem
+          </span>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20 text-xl">
+          <i class="ph ph-shield-star"></i>
+        </div>
+      </div>
+
+      <!-- Card Diretor Assinante -->
+      <div class="bg-gradient-to-br from-slate-900 to-[#101a38] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">Diretor Conectado</span>
+          <span id="headerDirectorName" class="text-sm font-bold text-white mt-1 block truncate max-w-[170px]">Carregando...</span>
+          <span id="headerDirectorRole" class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
+            CFO / Diretor Financeiro
+          </span>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-emerald-500/10 text-emerald-300 flex items-center justify-center border border-emerald-500/20 text-xl">
+          <i class="ph ph-user-circle-gear"></i>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Navegação por Abas Principais -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <div class="flex border-b border-slate-800 gap-1 md:gap-2 mb-6 overflow-x-auto pb-1">
+      <button onclick="switchTab('transfersTab')" id="tabBtnTransfers" class="tab-button active flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2">
+        <i class="ph ph-money text-base"></i>
+        <span>1. Aprovação de Transferências (> R$ 1 Milhão)</span>
+        <span id="badgePendingTransfersCount" class="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-slate-950">3</span>
+      </button>
+
+      <button onclick="switchTab('enrollmentTab')" id="tabBtnEnrollment" class="tab-button flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2">
+        <i class="ph ph-fingerprint text-base"></i>
+        <span>2. Vincular Biometria do Dispositivo</span>
+        <span id="enrollmentStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+      </button>
+
+      <button onclick="switchTab('inspectorTab')" id="tabBtnInspector" class="tab-button flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2">
+        <i class="ph ph-circuitry text-base"></i>
+        <span>3. Inspetor Criptográfico FIDO2 & Hardware</span>
+      </button>
+
+      <button onclick="switchTab('reportTab')" id="tabBtnReport" class="tab-button flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2">
+        <i class="ph ph-file-text text-base"></i>
+        <span>4. Relatório Técnico de Segurança & LGPD</span>
+      </button>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ABA 1: LISTA E APROVAÇÃO DE TRANSFERÊNCIAS DE ALTO VALOR -->
+    <!-- ========================================================================= -->
+    <div id="transfersTab" class="tab-content block">
+      
+      <!-- Banner de Contexto de Segurança -->
+      <div class="mb-6 p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 text-lg shrink-0 mt-0.5">
+            <i class="ph ph-shield-warning"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Regra de Compliance: Transferências Corporativas Críticas</h3>
+            <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">
+              Conforme as diretrizes do Banco Central e a política interna de segurança da Fintech, qualquer remessa superior a <strong class="text-amber-400">R$ 1.000.000,00</strong> exige assinatura biométrica direta do hardware seguro (Windows Hello / Touch ID / Face ID) de um Diretor. Senhas digitadas ou códigos SMS/OTP não são autorizados para mitigar ataques de <em>Phishing</em> ou <em>Session Hijacking</em>.
+            </p>
+          </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-2">
+          <span class="text-xs text-slate-400 font-mono">Padrão BACEN / FIDO2</span>
+        </div>
+      </div>
+
+      <!-- Grid de Transferências -->
+      <div id="transfersList" class="grid grid-cols-1 gap-4">
+        <!-- Renderizado dinamicamente via app.js -->
+        <div class="text-center py-12 text-slate-400">
+          <i class="ph ph-spinner animate-spin text-3xl mb-2 text-emerald-400"></i>
+          <p class="text-sm">Carregando transferências corporativas pendentes...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ABA 2: VINCULAR BIOMETRIA DO DISPOSITIVO (ONBOARDING) -->
+    <!-- ========================================================================= -->
+    <div id="enrollmentTab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Formulário de Registro Biométrico -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 text-2xl">
+              <i class="ph-bold ph-fingerprint"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Vincular Biometria do Dispositivo</h2>
+              <p class="text-xs text-slate-400">Registro seguro via WebAuthn API (FIDO2 / Passkey nativa)</p>
+            </div>
+          </div>
+
+          <form id="enrollmentForm" onsubmit="handleBiometricEnrollment(event)" class="mt-5 space-y-4">
+            
+            <!-- Diretor Selecionado -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Diretor Titular da Conta</label>
+              <input type="text" id="enrollDirectorName" readonly class="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-200 font-medium cursor-not-allowed">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Corporativo</label>
+                <input type="text" id="enrollDirectorEmail" readonly class="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-400 font-mono text-xs cursor-not-allowed">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Cargo / Alçada de Aprovação</label>
+                <input type="text" id="enrollDirectorRole" readonly class="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-emerald-400 font-medium cursor-not-allowed">
+              </div>
+            </div>
+
+            <!-- Dispositivo Detectado -->
+            <div class="p-3.5 rounded-xl bg-[#091124] border border-slate-800 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3">
+                <i class="ph ph-laptop text-emerald-400 text-lg"></i>
+                <div>
+                  <span class="text-slate-300 font-semibold block">Hardware Autenticador de Plataforma</span>
+                  <span id="detectedHardware" class="text-slate-400">Windows Hello / Touch ID / Biometria Nativa</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold">Suporte WebAuthn Ativo</span>
+            </div>
+
+            <!-- PARÁGRAFO OBRIGATÓRIO DE TERMOS DE USO E LGPD (Requisito da Entrega) -->
+            <div class="p-4 rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-emerald-500/30 shadow-inner">
+              <div class="flex items-center gap-2 mb-2 text-emerald-400 font-semibold text-xs uppercase tracking-wider">
+                <i class="ph-bold ph-shield-check text-sm"></i>
+                <span>Documento de Termos de Uso e Proteção de Dados (LGPD)</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed text-justify">
+                <strong>Cláusula de Privacidade Biométrica (LGPD Art. 5º, II e Art. 11):</strong> Em estrita conformidade com a Lei Geral de Proteção de Dados, declaramos que <em>seus dados biométricos (impressão digital ou mapa facial) JAMAIS são transmitidos pela internet, capturados ou armazenados em nossos servidores ou bancos de dados</em>. A verificação da biometria ocorre <strong>exclusivamente no hardware seguro do seu dispositivo pessoal</strong> (chip TPM / Apple Secure Enclave / Android TEE). Apenas um par de chaves criptográficas assimétricas é gerado: a chave privada permanece protegida e inacessível dentro do chip do seu computador, enquanto nossa Fintech recebe unicamente a chave pública para validar matematicamente as aprovações. Em caso de qualquer vazamento de banco de dados, sua impressão digital permanece 100% inviolável e segura.
+              </p>
+              
+              <div class="mt-3 flex items-start gap-2.5 pt-2 border-t border-slate-800">
+                <input type="checkbox" id="termsAccepted" required class="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer">
+                <label for="termsAccepted" class="text-xs text-slate-300 cursor-pointer select-none">
+                  Li e concordo com o <strong>Termo de Vinculação Biométrica em Hardware Seguro</strong> e com a política de proteção de dados sensíveis da Fintech.
+                </label>
+              </div>
+            </div>
+
+            <!-- Botão de Ação -->
+            <div class="pt-2">
+              <button type="submit" id="btnEnrollBiometrics" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-[0.99] cursor-pointer">
+                <i class="ph-bold ph-fingerprint text-lg"></i>
+                <span id="btnEnrollText">Vincular Biometria do Dispositivo (Windows Hello / Touch ID)</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Painel Lateral: Como Funciona no Hardware -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+              <i class="ph ph-cpu text-emerald-400 text-lg"></i>
+              O que acontece no seu hardware?
+            </h3>
+            
+            <ol class="relative border-l border-slate-800 space-y-4 ml-3 my-2 text-xs">
+              <li class="pl-5 relative">
+                <span class="absolute -left-1.5 top-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                <strong class="text-slate-200 block">1. Desafio do Servidor (Challenge)</strong>
+                <span class="text-slate-400">O servidor da Fintech emite um número criptográfico aleatório descartável de uso único (Nonce).</span>
+              </li>
+              <li class="pl-5 relative">
+                <span class="absolute -left-1.5 top-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                <strong class="text-slate-200 block">2. Leitura Nativa no Chip Seguro</strong>
+                <span class="text-slate-400">O sistema operacional abre o Windows Hello ou Touch ID. O sensor valida a sua digital diretamente no processador seguro (TPM).</span>
+              </li>
+              <li class="pl-5 relative">
+                <span class="absolute -left-1.5 top-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                <strong class="text-slate-200 block">3. Criação do Par de Chaves Assimétricas</strong>
+                <span class="text-slate-400">A Chave Privada fica trancada no chip. Apenas a Chave Pública é enviada para o banco cadastrar.</span>
+              </li>
+            </ol>
+
+            <div class="mt-4 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-emerald-300">
+              <i class="ph ph-info mr-1"></i>
+              <strong>Totalmente Anti-Phishing:</strong> O navegador restringe o uso da credencial exclusivamente para este domínio (RP ID). Páginas falsas ou clonadas são rejeitadas na camada do hardware.
+            </div>
+          </div>
+
+          <!-- Credenciais Cadastradas no Perfil -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-bold text-white flex items-center justify-between mb-3">
+              <span class="flex items-center gap-2">
+                <i class="ph ph-key text-amber-400 text-lg"></i>
+                Credenciais FIDO2 do Diretor
+              </span>
+              <span id="registeredKeysCount" class="text-xs font-mono text-slate-400">0 vinculadas</span>
+            </h3>
+
+            <div id="credentialsList" class="space-y-2">
+              <p class="text-xs text-slate-500 italic">Nenhum hardware biométrico vinculado ainda. Preencha o formulário acima para vincular.</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ABA 3: INSPETOR CRIPTOGRÁFICO & HARDWARE FIDO2 -->
+    <!-- ========================================================================= -->
+    <div id="inspectorTab" class="tab-content hidden">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="ph ph-circuitry text-emerald-400 text-xl"></i>
+              Inspetor Criptográfico FIDO2 / WebAuthn em Tempo Real
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Visualização pedagógica de como a biometria local protege contra roubo de senhas, phishing e vazamento de banco de dados.
+            </p>
+          </div>
+          <button onclick="refreshAuditLogs()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg flex items-center gap-1.5 transition-colors border border-slate-700 self-start md:self-auto">
+            <i class="ph ph-arrows-clockwise"></i>
+            <span>Atualizar Logs</span>
+          </button>
+        </div>
+
+        <!-- Diagrama Visual da Arquitetura Criptográfica -->
+        <div class="my-6 p-6 rounded-2xl bg-[#091126] border border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 text-center">
+            Fluxo Criptográfico de Aprovação de Transferência de Alto Valor
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+            
+            <!-- Etapa 1 -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-700/80 text-center relative flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm mb-3">1</div>
+              <h4 class="text-xs font-bold text-slate-200">Servidor NexusPay</h4>
+              <p class="text-[11px] text-slate-400 mt-2">Gera um <code class="text-amber-300">Challenge</code> aleatório e envia ao navegador.</p>
+              <span class="mt-3 text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">generateAuthenticationOptions()</span>
+            </div>
+
+            <!-- Etapa 2 -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/50 shadow-lg shadow-emerald-500/10 text-center relative flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-bold text-sm mb-3">2</div>
+              <h4 class="text-xs font-bold text-emerald-300">Hardware do Dispositivo</h4>
+              <p class="text-[11px] text-slate-300 mt-2">O <strong>TPM / Secure Enclave</strong> solicita a impressão digital via Windows Hello / Touch ID.</p>
+              <span class="mt-3 text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">Biometria fica no chip!</span>
+            </div>
+
+            <!-- Etapa 3 -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-700/80 text-center relative flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold text-sm mb-3">3</div>
+              <h4 class="text-xs font-bold text-slate-200">Assinatura Digital</h4>
+              <p class="text-[11px] text-slate-400 mt-2">A <strong>Chave Privada</strong> no chip assina o desafio. A chave NUNCA sai do hardware!</p>
+              <span class="mt-3 text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-mono">ECDSA / Ed25519</span>
+            </div>
+
+            <!-- Etapa 4 -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-700/80 text-center relative flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-sm mb-3">4</div>
+              <h4 class="text-xs font-bold text-slate-200">Validação e Liberação</h4>
+              <p class="text-[11px] text-slate-400 mt-2">O servidor confere a assinatura com a <strong>Chave Pública</strong> e efetiva a transferência.</p>
+              <span class="mt-3 text-[10px] px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 font-mono">verifyAuthenticationResponse()</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tabela de Logs de Auditoria Criptográfica -->
+        <div>
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="ph ph-shield-check text-emerald-400"></i>
+            Trilha de Auditoria Criptográfica do Servidor (Audit Logs)
+          </h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                <tr>
+                  <th class="py-2.5 px-3">Horário</th>
+                  <th class="py-2.5 px-3">Evento</th>
+                  <th class="py-2.5 px-3">Detalhe Técnico</th>
+                  <th class="py-2.5 px-3">Severidade</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogsBody" class="divide-y divide-slate-800/60 font-mono">
+                <!-- Inserido dinamicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ABA 4: RELATÓRIO TÉCNICO DE SEGURANÇA E LGPD (Requisito da Entrega) -->
+    <!-- ========================================================================= -->
+    <div id="reportTab" class="tab-content hidden">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-6">
+        
+        <div class="border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+            <i class="ph-bold ph-file-text"></i>
+            <span>Entregável Obrigatório: Reflexão de Segurança & LGPD</span>
+          </div>
+          <h2 class="text-xl font-bold text-white mt-1">Relatório Técnico de Segurança: FIDO2 e Proteção contra Fraudes</h2>
+          <p class="text-xs text-slate-400 mt-1">Análise aprofundada para avaliação acadêmica e bancária sobre a WebAuthn API</p>
+        </div>
+
+        <!-- Pergunta 1 -->
+        <div class="p-5 rounded-xl bg-[#091124] border border-slate-800">
+          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">1</span>
+            A impressão digital do usuário viaja pela internet ou fica salva apenas no hardware do dispositivo?
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed text-justify">
+            <strong>Resposta Técnica e Criptográfica:</strong> A impressão digital <strong>NUNCA viaja pela internet</strong> e <strong>NUNCA sai do hardware do usuário</strong>.
+          </p>
+          <div class="mt-3 p-3 rounded-lg bg-slate-950/80 border border-slate-800/80 text-xs text-slate-400 space-y-2">
+            <p>
+              • <strong>Isolamento de Hardware:</strong> Quando o usuário encosta o dedo no leitor (Windows Hello, Touch ID ou leitor biométrico do Android), os dados brutos e as minúcias biométricas são processados exclusivamente dentro de um processador criptográfico isolado — o <strong>TPM (Trusted Platform Module)</strong> no Windows, o <strong>Apple Secure Enclave</strong> nos Macs/iPhones ou o <strong>TEE (Trusted Execution Environment)</strong> no Android.
+            </p>
+            <p>
+              • <strong>Assinatura Digital sem Exposição:</strong> A biometria atua apenas como uma "chave de liberação local". Uma vez reconhecida a digital pelo chip, o hardware utiliza uma <strong>Chave Privada</strong> (que nunca sai do chip) para assinar digitalmente o desafio gerado pelo servidor da Fintech.
+            </p>
+            <p>
+              • <strong>O que trafega na rede:</strong> Pela internet trafega somente a <em>assinatura criptográfica</em> e o <em>ID da credencial</em>. Mesmo se um atacante realizar um ataque <em>Man-in-the-Middle (MitM)</em> ou interceptar o tráfego HTTPS, ele jamais terá acesso a qualquer dado biométrico.
+            </p>
+          </div>
+        </div>
+
+        <!-- Pergunta 2 -->
+        <div class="p-5 rounded-xl bg-[#091124] border border-slate-800">
+          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">2</span>
+            Como esse modelo protege contra vazamento de banco de dados (comparado ao que fizemos na Aula 1 com senhas)?
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed text-justify">
+            <strong>Comparativo com o modelo tradicional de senhas (Aula 1):</strong>
+          </p>
+          <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-3.5 rounded-lg bg-rose-500/5 border border-rose-500/20 text-rose-200">
+              <div class="font-bold flex items-center gap-1.5 mb-1.5 text-rose-400">
+                <i class="ph ph-x-circle"></i> Modelo Tradicional (Aula 1 - Senhas / Hashes)
+              </div>
+              <ul class="space-y-1.5 text-slate-300 list-disc list-inside">
+                <li>O banco de dados armazena senhas (mesmo com bcrypt/argon2).</li>
+                <li>Se o banco for invadido ou vazar, os invasores utilizam <em>Rainbow Tables</em>, ataques de força bruta (hashcat/GPUs) e credenciais reutilizadas em outros sites.</li>
+                <li>O invasor consegue autenticar remotamente de qualquer lugar do mundo fingindo ser a vítima.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-emerald-200">
+              <div class="font-bold flex items-center gap-1.5 mb-1.5 text-emerald-400">
+                <i class="ph ph-check-circle"></i> Modelo Moderno FIDO2 / WebAuthn (Fintech)
+              </div>
+              <ul class="space-y-1.5 text-slate-300 list-disc list-inside">
+                <li>O banco de dados armazena <strong>apenas a Chave Pública</strong> e o ID da credencial.</li>
+                <li>A Chave Pública é, por definição, <strong>pública</strong>. Se o banco vazar por completo, os invasores <strong>NÃO conseguem gerar assinaturas</strong> nem forjar autorizações.</li>
+                <li>Para aprovar uma transferência, é matematicamente obrigatória a posse física do dispositivo seguro do Diretor e a leitura da sua biometria local.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pergunta 3 -->
+        <div class="p-5 rounded-xl bg-[#091124] border border-slate-800">
+          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">3</span>
+            Por que o WebAuthn é imune a ataques de Phishing?
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed text-justify">
+            Em um golpe de <em>Phishing</em> convencional, o invasor clona a página de login da Fintech em um domínio falso como <code class="text-rose-300">nexuspay-seguranca.com</code>. Quando o usuário desavisado digita a senha ou o código SMS, o atacante rouba a credencial em tempo real.
+          </p>
+          <p class="text-xs text-slate-300 leading-relaxed text-justify mt-2">
+            No padrão <strong>FIDO2 / WebAuthn</strong>, a autenticação possui vínculo de origem obrigatório (<strong>RP ID / Origin Binding</strong>): o próprio navegador web confere a barra de endereços diretamente com o hardware. Se o domínio não coincidir com a chave registrada, o chip recusa a assinatura automaticamente. O invasor do site falso <em>nunca recebe</em> a assinatura válida, tornando o Phishing matematicamente inofensivo.
+          </p>
+        </div>
+
+        <!-- Conformidade LGPD -->
+        <div class="p-5 rounded-xl bg-[#091124] border border-slate-800">
+          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">4</span>
+            Conformidade com a LGPD (Lei Geral de Proteção de Dados - Lei 13.709/2018)
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed text-justify">
+            O Artigo 5º, inciso II da LGPD classifica dados biométricos como <strong>dados pessoais sensíveis</strong>, sujeitos a severas penalidades em caso de vazamento. Ao adotar o padrão WebAuthn / FIDO2, a Fintech atinge o ápice do princípio de <em>Privacy by Design</em> e <em>Minimização de Dados</em> (Artigo 6º, III): <strong>como a Fintech nunca coleta, nunca transmite e nunca guarda a biometria, o risco de vazamento de dados sensíveis na nuvem é zerado na origem</strong>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: CONFIRMAÇÃO DE TRANSFERÊNCIA DE ALTO VALOR E LEITOR BIOMÉTRICO -->
+  <!-- ========================================================================= -->
+  <div id="transferModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+      
+      <!-- Cabeçalho do Modal -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
+            <i class="ph-bold ph-shield-warning"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Autorização de Transferência Crítica</h3>
+            <span class="text-xs text-slate-400 font-mono" id="modalTransferId">TRX-XXXXX</span>
+          </div>
+        </div>
+        <button onclick="closeModal('transferModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Detalhes da Transferência -->
+      <div class="my-5 space-y-3">
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+          <span class="text-[11px] text-slate-400 block">Favorecido (Beneficiário)</span>
+          <span id="modalBeneficiary" class="text-sm font-bold text-white block mt-0.5">Nome do Favorecido</span>
+          <span id="modalCnpj" class="text-xs text-slate-400 font-mono">00.000.000/0000-00</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-[11px] text-slate-400 block">Instituição Bancária</span>
+            <span id="modalBank" class="font-semibold text-slate-200 mt-0.5 block">Banco</span>
+            <span id="modalAccount" class="text-[11px] text-slate-400 font-mono mt-0.5 block">Ag / Conta</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-amber-500/30">
+            <span class="text-[11px] text-amber-400 font-semibold block">Valor a Transferir</span>
+            <span id="modalAmount" class="text-lg font-bold text-white mt-0.5 block">R$ 0,00</span>
+            <span class="text-[10px] text-amber-300 font-mono block">Acima de R$ 1 Milhão</span>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+          <span class="text-[11px] text-slate-400 block">Finalidade</span>
+          <span id="modalDescription" class="text-slate-300 mt-0.5 block">Descrição</span>
+        </div>
+
+        <!-- Alerta de Assinatura Biométrica -->
+        <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
+          <i class="ph-bold ph-fingerprint text-xl shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-white block">Assinatura Biométrica Exigida:</strong>
+            Ao clicar no botão abaixo, o sistema operacional abrirá o prompt nativo de biometria (<span class="font-semibold">Windows Hello / Touch ID</span>) para validar a sua identidade física.
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações do Modal -->
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeModal('transferModal')" class="flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition-colors">
+          Cancelar
+        </button>
+        <button id="btnAuthorizeWithBiometrics" onclick="executeBiometricApproval()" class="flex-[2] py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <i class="ph-bold ph-fingerprint text-base"></i>
+          <span id="btnAuthorizeText">Aprovar com Biometria</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: COMPROVANTE CRIPTOGRÁFICO DE SUCESSO DA TRANSFERÊNCIA -->
+  <!-- ========================================================================= -->
+  <div id="receiptModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+      
+      <!-- Cabeçalho de Sucesso -->
+      <div class="text-center pb-4 border-b border-slate-800">
+        <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg shadow-emerald-500/20">
+          <i class="ph-bold ph-check"></i>
+        </div>
+        <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold uppercase tracking-wider">
+          Transferência Bancária Efetivada
+        </span>
+        <h3 class="text-lg font-bold text-white mt-2">Comprovante de Autorização FIDO2</h3>
+        <p class="text-xs text-slate-400">Assinatura biométrica validada com sucesso pelo chip TPM / Secure Enclave</p>
+      </div>
+
+      <!-- Dados do Comprovante -->
+      <div id="receiptContent" class="my-4 space-y-3 text-xs">
+        <!-- Preenchido via app.js -->
+      </div>
+
+      <!-- Ações do Comprovante -->
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeModal('receiptModal')" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-colors">
+          Fechar Comprovante
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: CADASTRAR NOVO DIRETOR -->
+  <!-- ========================================================================= -->
+  <div id="newDirectorModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="ph ph-user-plus text-emerald-400"></i>
+          Cadastrar Novo Diretor Executivo
+        </h3>
+        <button onclick="closeModal('newDirectorModal')" class="text-slate-400 hover:text-white">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreateDirector(event)" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Nome Completo</label>
+          <input type="text" id="newDirectorName" required placeholder="Ex: Dr. Carlos Mendonça" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">E-mail Corporativo</label>
+          <input type="email" id="newDirectorEmail" required placeholder="carlos.mendonca@nexuspay.com.br" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Cargo / Alçada</label>
+          <select id="newDirectorRole" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white">
+            <option value="Diretor Financeiro (CFO)">Diretor Financeiro (CFO)</option>
+            <option value="Diretora de Riscos (CRO)">Diretora de Riscos (CRO)</option>
+            <option value="Diretor Presidente (CEO)">Diretor Presidente (CEO)</option>
+            <option value="Diretor de Operações (COO)">Diretor de Operações (COO)</option>
+          </select>
+        </div>
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="closeModal('newDirectorModal')" class="flex-1 py-2 rounded-lg bg-slate-800 text-slate-300">Cancelar</button>
+          <button type="submit" class="flex-1 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold">Cadastrar e Selecionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts: Vendor WebAuthn Browser + App Logic -->
+  <script src="vendor/simplewebauthn-browser.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
